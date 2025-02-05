@@ -15,16 +15,16 @@ export default function SearchUniversities() {
             try {
                 setLoading(true); // Включаем индикатор загрузки
                 const q = query(collection(db, "universities")); // Запрос к коллекции "universities"
-                const querySnapshot = await getDocs(q); // Получаем данные из Firestore
+                const querySnapshot = await getDocs(q); // Получаем данные
                 setUniversities(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))); // Сохраняем данные
             } catch (error) {
-                console.error("Ошибка при получении данных: ", error); // Логируем ошибку, если она есть
+                console.error("Ошибка при получении данных: ", error);
             } finally {
                 setLoading(false); // Выключаем индикатор загрузки
             }
         };
 
-        fetchUniversities(); // Вызываем функцию загрузки университетов
+        fetchUniversities();
     }, []);
 
     const handleSearch = () => {

@@ -1,152 +1,105 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { auth, googleProvider } from "../../firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../firebase";
-import { 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    fetchSignInMethodsForEmail, 
-    signInWithPopup, 
-    GoogleAuthProvider, 
-    signInAnonymously,
-    onAuthStateChanged 
-} from "firebase/auth";
 
 export default function AuthPage() 
 {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [isLogin, setIsLogin] = useState(true);
-    const [error, setError] = useState("");
+    const [isRegister, setIsRegister] = useState(false);
     const navigate = useNavigate();
 
-    useEffect(() => 
+    // 🔹 Обработчик входа и регистрации по email
+    const handleAuth = async () => 
     {
-        onAuthStateChanged(auth, (user) => 
-        {
-            if (user) 
-            {
-                if (user.email === "mailybaevadilet@gmail.com") 
-                {
-                    navigate("/admin");
-                } 
-                else if (user.isAnonymous) 
-                {
-                    navigate("/search");
-                } 
-                else 
-                {
-                    navigate("/profile");
-                }
-            }
-        });
-    }, [navigate]);
-
-    const handleSubmit = async (e) => 
-    {
-        e.preventDefault();
-        setError("");
-
         try 
         {
-            if (isLogin) 
+            if (isRegister) 
             {
-                await signInWithEmailAndPassword(auth, email, password);
+                await createUserWithEmailAndPassword(auth, email, password);
             } 
             else 
             {
-                const methods = await fetchSignInMethodsForEmail(auth, email);
-                if (methods.length > 0) 
-                {
-                    setError("Эта почта уже зарегистрирована.");
-                    return;
-                }
-                await createUserWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(auth, email, password);
             }
+            navigate("/"); // После входа перекидываем на главную
         } 
-        catch (err) 
+        catch (error) 
         {
-            setError(err.message);
+            console.error("Ошибка:", error.message);
         }
     };
 
+    // 🔹 Вход через Google
     const handleGoogleSignIn = async () => 
     {
         try 
         {
-            await signInWithPopup(auth, new GoogleAuthProvider());
+            await signInWithPopup(auth, googleProvider);
+            navigate("/"); 
         } 
-        catch (err) 
+        catch (error) 
         {
-            setError(err.message);
+            console.error("Ошибка Google входа:", error.message);
         }
     };
 
+    // 🔹 Анонимный вход
     const handleAnonymousSignIn = async () => 
     {
         try 
         {
             await signInAnonymously(auth);
+            navigate("/");
         } 
-        catch (err) 
+        catch (error) 
         {
-            setError(err.message);
+            console.error("Ошибка анонимного входа:", error.message);
         }
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-            <div className="bg-gray-500 p-8 rounded-xl shadow-lg w-96">
-                <h2 className="text-2xl font-semibold mb-5 text-center">
-                    {isLogin ? "Вход в аккаунт" : "Регистрация"}
-                </h2>
+        <div className="flex flex-col items-center p-4">
+            <h2 className="text-xl mb-4">{isRegister ? "Регистрация" : "Вход"}</h2>
+            
+            {/* Поле Email */}
+            <input 
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border p-2 mb-2 w-80"
+            />
 
-                {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+            {/* Поле Пароля */}
+            <input 
+                type="password"
+                placeholder="Пароль"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border p-2 mb-2 w-80"
+            />
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                    />
-                    <input
-                        type="password"
-                        placeholder="Пароль"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                    />
-                    <button className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700 transition">
-                        {isLogin ? "Войти" : "Зарегистрироваться"}
-                    </button>
-                </form>
+            {/* Кнопка Входа/Регистрации */}
+            <button onClick={handleAuth} className="bg-blue-500 text-white p-2 w-80 mb-2">
+                {isRegister ? "Зарегистрироваться" : "Войти"}
+            </button>
 
-                <div className="mt-4 space-y-2">
-                    <button 
-                        className="w-full bg-red-500 text-white p-3 rounded-lg font-medium hover:bg-red-600 transition"
-                        onClick={handleGoogleSignIn}
-                    >
-                        Войти через Google
-                    </button>
+            {/* Вход через Google */}
+            <button onClick={handleGoogleSignIn} className="bg-red-500 text-white p-2 w-80 mb-2">
+                Войти через Google
+            </button>
 
-                    <button 
-                        className="w-full bg-gray-600 text-white p-3 rounded-lg font-medium hover:bg-gray-700 transition"
-                        onClick={handleAnonymousSignIn}
-                    >
-                        Анонимный вход
-                    </button>
-                </div>
+            {/* Анонимный вход */}
+            <button onClick={handleAnonymousSignIn} className="bg-gray-500 text-white p-2 w-80 mb-2">
+                Войти как гость
+            </button>
 
-                <button 
-                    className="mt-3 text-sm text-blue-600 w-full text-center"
-                    onClick={() => setIsLogin(!isLogin)}
-                >
-                    {isLogin ? "Нет аккаунта? Зарегистрируйтесь" : "Уже есть аккаунт? Войти"}
-                </button>
-            </div>
+            {/* Переключение между Входом и Регистрацией */}
+            <p onClick={() => setIsRegister(!isRegister)} className="text-blue-600 cursor-pointer">
+                {isRegister ? "Уже есть аккаунт? Войти" : "Нет аккаунта? Зарегистрироваться"}
+            </p>
         </div>
     );
 }

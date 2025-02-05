@@ -3,7 +3,7 @@ import { db, storage} from '../../firebase'; // Подключаем db и stora
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'; // Импортируем необходимые функции из Firebase
 
-const AddUniversity = () => {
+const AdminPanel = () => {
     const [name, setName] = useState('');
     const [country, setCountry] = useState('');
     const [faculties, setFaculties] = useState([]);  // Список выбранных факультетов
@@ -324,4 +324,4 @@ const AddUniversity = () => {
     );
 };
 
-export default AddUniversity;
+export default AdminPanel;
