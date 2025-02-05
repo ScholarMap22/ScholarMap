@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { db, storage} from '../firebase'; // Подключаем db и storage
+import { db, storage} from '../../firebase'; // Подключаем db и storage
 import { collection, addDoc } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'; // Импортируем необходимые функции из Firebase
 
