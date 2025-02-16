@@ -1,0 +1,49 @@
+{
+    "settings": "Settings",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language",
+    "notifications": "Notifications",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "privacy": "Privacy",
+    "default": "Default mode",
+    "noTracking": "No tracking",
+    "save": "Save",
+    "logout": "Log out",
+    "deleteAccount": "Delete account",
+    "profile": {
+        "title": "Profile",
+        "uploadPhoto": "Upload photo",
+        "name": "Name",
+        "save": "Save",
+        "logout": "Log out",
+        "favorites": "Favorite universities",
+        "noFavorites": "No favorite universities"
+    },
+    "name": "Name",
+    "email": "Email",
+    "changeAvatar": "Change avatar",
+    "favoriteUniversities": "Favorite universities",
+    "remove": "Remove",
+    "policy": {
+        "title": "Terms of Use and Privacy Policy",
+        "intro": "By using this service, you agree to the following terms.",
+        "data": {
+            "title": "Data Collection",
+            "text": "We collect personal data such as email and username for account identification. Data is stored securely."
+        },
+        "security": {
+            "title": "Security",
+            "text": "We use encryption to protect your information and do not share data with third parties."
+        },
+        "usage": {
+            "title": "Usage Rules",
+            "text": "Users must follow ethical standards and not misuse the service."
+        },
+        "more": "More details",
+        "button": "Privacy Policy",
+        "close": "Close"
+    }
+}

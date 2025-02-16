@@ -1,98 +1,135 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { db, auth } from "../../firebase";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { signOut } from "firebase/auth";
+import React, { useState, useEffect } from "react";
+import { Link , useNavigate} from "react-router-dom";
+import { auth, db } from "../../firebase";
+import { doc, deleteDoc } from "firebase/firestore";
 
-export default function HomePage()
+export default function HomePage({ search, setSearch, universities = [], toggleFavorite, favorites = [] }) 
 {
-    const [universities, setUniversities] = useState([]);
-    const [search, setSearch] = useState("");
-    const [filterOpen, setFilterOpen] = useState(false);
-    const [filters, setFilters] = useState({ country: "", faculty: "" });
+    const [filter, setFilter] = useState(false);
+    const [selectedCountry, setSelectedCountry] = useState("");
+    const [selectedFaculty, setSelectedFaculty] = useState("");
+    const [user, setUser] = useState(null);
     const navigate = useNavigate();
-    const user = auth.currentUser;
-    const isAdmin = user?.email === "mailybaevadilet@gmail.com";
 
-    useEffect(() =>
+    useEffect(() => 
     {
-        const fetchUniversities = async () =>
-        {
-            const querySnapshot = await getDocs(collection(db, "universities"));
-            setUniversities(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        };
-
-        fetchUniversities();
+        const unsubscribe = auth.onAuthStateChanged(setUser);
+        return () => unsubscribe();
     }, []);
 
-    const handleDelete = async (id) =>
+    const isAdmin = user?.email === "mailybaevadilet@gmail.com";
+
+    const filteredUniversities = universities.filter(u =>
+        u?.name?.toLowerCase().includes(search?.toLowerCase() || "") &&
+        (selectedCountry ? u?.country?.toLowerCase().includes(selectedCountry.toLowerCase()) : true) &&
+        (selectedFaculty ? u?.faculty?.toLowerCase().includes(selectedFaculty.toLowerCase()) : true)
+    );
+
+    const handleDelete = async (id) => 
     {
-        if (window.confirm("Удалить этот университет?"))
+        if (window.confirm("Вы уверены, что хотите удалить этот университет?")) 
         {
             await deleteDoc(doc(db, "universities", id));
-            setUniversities(universities.filter(u => u.id !== id));
         }
     };
 
-    const filteredUniversities = universities.filter(u =>
-        u?.name &&
-        (!search || u.name.toLowerCase().includes(search.toLowerCase())) &&
-        (!filters.country || u.country === filters.country) &&
-        (!filters.faculty || u.faculty === filters.faculty)
-    );
-
     return (
-        <div>
-            {/* HEADER */}
-            <header className="w-full bg-gray-800 text-white p-4 flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Университеты</h1>
-                <nav className="space-x-4">
-                    <Link to="/" className="hover:underline">Главная</Link>
-                    <Link to="/chatbot" className="hover:underline">Чат-бот</Link>
-                    <Link to="/profile" className="hover:underline">Профиль</Link>
-                    {isAdmin && <Link to="/admin" className="hover:underline">Админская панель</Link>}
-                    <button onClick={() => signOut(auth)} className="ml-4 bg-red-500 px-3 py-1 rounded">Выйти</button>
-                </nav>
-            </header>
-
-            {/* ПОИСК */}
-            <div className="p-4 flex items-center gap-4">
+        <div className="container mx-auto px-4 py-24">
+            <div className="flex flex-col items-center w-full">
+                {/* Поисковая строка */}
                 <input
                     type="text"
                     placeholder="Поиск университетов..."
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="border p-2 w-full"
+                    value={search || ""}
+                    onChange={(e) => setSearch?.(e.target.value)}
+                    className="border p-3 w-full max-w-lg rounded-md text-lg"
                 />
-                <button onClick={() => setFilterOpen(!filterOpen)} className="bg-gray-700 text-white px-4 py-2 rounded">Фильтр</button>
+
+                {/* Кнопка фильтра */}
+                <button 
+                    className="mt-4 bg-gray-200 px-6 py-2 rounded text-lg" 
+                    onClick={() => setFilter(!filter)}
+                >
+                    Фильтр
+                </button>
+
+                {/* Фильтр по стране и факультету */}
+                {filter && (
+                    <div className="mt-4 p-4 border rounded w-full max-w-lg bg-gray-20 shadow-md">
+                        <label className="block text-lg">Страна
+                            <input 
+                                type="text" 
+                                value={selectedCountry} 
+                                onChange={(e) => setSelectedCountry(e.target.value)} 
+                                className="border p-3 w-full rounded-md" 
+                            />
+                        </label>
+                        <label className="block mt-4 text-lg">Факультет
+                            <input 
+                                type="text" 
+                                value={selectedFaculty} 
+                                onChange={(e) => setSelectedFaculty(e.target.value)} 
+                                className="border p-3 w-full rounded-md" 
+                            />
+                        </label>
+                    </div>
+                )}
             </div>
 
-            {/* ФИЛЬТРЫ */}
-            {filterOpen && (
-                <div className="p-4 bg-gray-500 border rounded">
-                    <label className="block">Страна:
-                        <input type="text" onChange={(e) => setFilters({ ...filters, country: e.target.value })} className="border p-2 w-full" />
-                    </label>
-                    <label className="block mt-2">Факультет:
-                        <input type="text" onChange={(e) => setFilters({ ...filters, faculty: e.target.value })} className="border p-2 w-full" />
-                    </label>
-                </div>
-            )}
-
-            {/* СПИСОК УНИВЕРСИТЕТОВ */}
-            <div className="grid grid-cols-3 gap-4 p-4">
+            {/* Список университетов */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                 {filteredUniversities.length > 0 ? (
                     filteredUniversities.map(u => (
-                        <div key={u.id} className="border p-4 rounded shadow">
-                            <h2 className="text-xl font-bold">{u.name}</h2>
-                            <p>{u.country}</p>
-                            <button onClick={() => navigate(`/university/${u.id}`)} className="mt-2 bg-blue-500 text-white px-3 py-1 rounded">Подробнее</button>
-                            {isAdmin && <button onClick={() => handleDelete(u.id)} className="ml-2 bg-red-500 text-white px-3 py-1 rounded">Удалить</button>}
+                        <div key={u?.id} className="border p-6 rounded-lg shadow-lg bg-white relative">
+                            {/* Изображение университета */}
+                            {u?.image && (
+                                <img src={u.image} alt={u?.name || "Университет"} className="w-full h-40 object-cover rounded-md" />
+                            )}
+
+                            {/* Название и страна */}
+                            <h2 className="text-xl font-bold mt-2">{u?.name || "Неизвестный университет"}</h2>
+                            <p className="text-gray-600">{u?.country || "Неизвестная страна"}</p>
+                            <p className="text-gray-700">{u?.shortDescription || "Нет краткого описания"}</p>
+
+                            {/* Рейтинг в виде звезд */}
+                            <div className="flex items-center mt-2">
+                                {[...Array(10)].map((_, i) => (
+                                    <span key={i} className={i < (u?.rating || 0) ? "text-yellow-500" : "text-gray-300"}>★</span>
+                                ))}
+                            </div>
+
+                            {/* Кнопки */}
+                            <div className="mt-3 flex justify-between">
+                            <button onClick={() => navigate(`/university/${u.id}`)}>
+                                Подробнее
+                            </button>
+                            <button onClick={() => toggleFavorite(u)}>
+                                {favorites.some(fav => fav.id === u.id) ? "Убрать из избранного" : "Добавить в избранное"}
+                            </button>
+                            </div>
+
+                            {/* Кнопка удаления (только для админа) */}
+                            {isAdmin && (
+                                <button
+                                    onClick={() => handleDelete(u?.id)}
+                                    className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded"
+                                >
+                                    Удалить
+                                </button>
+                            )}
                         </div>
                     ))
                 ) : (
-                    <p className="col-span-3 text-center">Университетов не найдено</p>
+                    <p className="text-gray-500">Университеты не найдены</p>
                 )}
             </div>
+
+            {/* Кнопка для админов */}
+            {isAdmin && (
+                <Link to="/admin" className="fixed bottom-4 right-4 bg-blue-500 text-white p-3 rounded-full shadow-lg">
+                    Админская панель
+                </Link>
+            )}
         </div>
     );
 }
